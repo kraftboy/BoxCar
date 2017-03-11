@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2017
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoxCar", "BoxCar.csproj", "{C5B1F103-5F3B-FB9B-C950-D8EF95B51162}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BoxCar.Editor", "BoxCar.Editor.csproj", "{9F584FBD-E2D8-9DC2-9730-D64B282B73DC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C5B1F103-5F3B-FB9B-C950-D8EF95B51162}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5B1F103-5F3B-FB9B-C950-D8EF95B51162}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C5B1F103-5F3B-FB9B-C950-D8EF95B51162}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C5B1F103-5F3B-FB9B-C950-D8EF95B51162}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F584FBD-E2D8-9DC2-9730-D64B282B73DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F584FBD-E2D8-9DC2-9730-D64B282B73DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F584FBD-E2D8-9DC2-9730-D64B282B73DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F584FBD-E2D8-9DC2-9730-D64B282B73DC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
