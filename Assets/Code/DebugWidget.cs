@@ -44,13 +44,6 @@ public class DebugWidget : MonoBehaviour {
     private List<IDebugWidgetPage> debugPages = new List<IDebugWidgetPage>();
     private int currentPage = 0;
 
-    void MoveToLayer(Transform root, int layer)
-    {
-        root.gameObject.layer = layer;
-        foreach (Transform child in root)
-            MoveToLayer(child, layer);
-    }
-
     void Start () {
 
         debugWidget = new GameObject("DebugWidget_" + gameObject.name);
@@ -72,9 +65,9 @@ public class DebugWidget : MonoBehaviour {
         rect.pivot = new Vector2(0.5f, 0.0f);
 
         CreateText(debugWidget);
-        
 
-        MoveToLayer(debugWidget.transform, LayerMask.NameToLayer("UI"));
+
+        UIUtils.MoveToLayer(debugWidget.transform, LayerMask.NameToLayer("UI"));
 
         debugPages.Add(new ComponentPage(transform.root));
     }

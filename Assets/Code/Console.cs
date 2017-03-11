@@ -17,7 +17,6 @@ public class Console : MonoBehaviour {
 
     private InputField consoleInput;
     private Text consoleLogText;
-    private bool moveToEnd = false;
     private int logLineCount;
 
     List<string> consoleLog = new List<string>();
@@ -29,49 +28,71 @@ public class Console : MonoBehaviour {
         
         instance = this;
 
+        Hide();
+
         SetupGUI();
 
-        Hide();
-	}
+    }
 
     void SetupGUI()
     {
-        consoleWidth = Screen.width;
-        consoleHeight = Screen.height / 2;
+        consoleWidth = Camera.main.pixelWidth;
+        consoleHeight = Camera.main.pixelHeight / 2;
 
-        Canvas canvas = GetComponent<Canvas>();
-        RectTransform rect = transform as RectTransform;
-        rect.offsetMin = new Vector2(0, Screen.height - consoleHeight);
-        rect.offsetMax = new Vector2(0, 0);
-
+        GameObject panelObject = GameObject.Find("ConsolePanel");
+        if(panelObject)
+        {
+            RectTransform rectTransform = panelObject.transform as RectTransform;
+            rectTransform.offsetMin = new Vector2(0, 0);
+            rectTransform.offsetMax = new Vector2(0, -consoleHeight);
+        }
+        else
+        {
+            Debug.Log("ConsolePanel not found.");
+        }
+        
         GameObject inputGameObject = GameObject.Find("ConsoleInput");
-        consoleInput = inputGameObject.GetComponent<InputField>();
-        Text consoleInputText = inputGameObject.GetComponentInChildren<Text>();
-        RectTransform inputRect = consoleInput.transform as RectTransform;
-        inputRect.offsetMin = new Vector2(0, 0);
-        inputRect.offsetMax = new Vector2(0, -consoleHeight + 18);
-        consoleInput.onEndEdit.AddListener(delegate { ProcessInput(consoleInput); });
-        consoleInput.onValueChanged.AddListener(delegate { ProcessKey(consoleInput); });
+        if (inputGameObject)
+        {
+            consoleInput = inputGameObject.GetComponent<InputField>();
+            consoleInput.onEndEdit.AddListener(delegate { ProcessInput(consoleInput); });
+            consoleInput.onValueChanged.AddListener(delegate { ProcessKey(consoleInput); });
 
-        GameObject obj = GameObject.Find("ConsoleLog");
-        consoleLogText = obj.GetComponent<Text>();
-        consoleLogText.text = "fooo";
-        RectTransform consoleLogRect = consoleLogText.transform as RectTransform;
-        consoleLogRect.offsetMin = new Vector2(0, 18);
-        consoleLogRect.offsetMax = new Vector2(0, -consoleHeight);
+            Text consoleInputText = inputGameObject.GetComponentInChildren<Text>();
+        }
+        else
+        {
+            Debug.Log("ConsoleInput not found.");
+        }
+        
+        GameObject logObject = GameObject.Find("ConsoleLog");
+        if (logObject)
+        {
+            consoleLogText = logObject.GetComponent<Text>();
+            consoleLogText.text = "fooo";
+            RectTransform consoleLogRect = consoleLogText.transform as RectTransform;
+            consoleLogRect.offsetMin = new Vector2(0, 18);
+            consoleLogRect.offsetMax = new Vector2(0, 0);
 
-        // calculate number of lines that can be displayed
-        Vector3[] worldCorners = new Vector3[4];
-        consoleLogText.rectTransform.GetWorldCorners(worldCorners);
-        logLineCount = (int)Mathf.Abs(((worldCorners[1].y - worldCorners[0].y) / consoleLogText.font.lineHeight));
-        logLineCount += 4;
+            // calculate number of lines that can be displayed
+            Vector3[] worldCorners = new Vector3[4];
+            consoleLogText.rectTransform.GetWorldCorners(worldCorners);
+            logLineCount = (int)Mathf.Abs(((worldCorners[1].y - worldCorners[0].y) / consoleLogText.font.lineHeight));
+            logLineCount += 4;
 
-        TextGenerationSettings generationSettings = consoleLogText.GetGenerationSettings(consoleLogText.rectTransform.rect.size);
-        float textHeight = consoleLogText.cachedTextGeneratorForLayout.GetPreferredHeight("", generationSettings);
+            TextGenerationSettings generationSettings = consoleLogText.GetGenerationSettings(consoleLogText.rectTransform.rect.size);
+            float textHeight = consoleLogText.cachedTextGeneratorForLayout.GetPreferredHeight("", generationSettings);
 
-        consoleLog = new List<string>(Enumerable.Repeat("", logLineCount - 1));
-        consoleLog.Add((GameObject.Find("GameController").GetComponent<GameController>() as GameController).GetVersionString());
-        consoleLogText.text = string.Join("\n", consoleLog.ToArray());
+            consoleLog = new List<string>(Enumerable.Repeat("", logLineCount - 1));
+            consoleLog.Add((GameObject.Find("GameController").GetComponent<GameController>() as GameController).GetVersionString());
+            consoleLogText.text = string.Join("\n", consoleLog.ToArray());
+        }
+        else
+        {
+            Debug.Log("ConsoleLog not found.");
+        }
+
+        UIUtils.MoveToLayer(transform, LayerMask.NameToLayer("UI"));
     }
 
     string consolePrompt = ">";
@@ -101,8 +122,12 @@ public class Console : MonoBehaviour {
         }
         
         // ignore tilde
-        if (command == "`")
+        if (command == "`" || command == "")
+        {
+            FocusInputField();
             return;
+        }
+            
 
         historyBuffer.Insert(0, command);
         consoleLog.Add(consoleInput.text);
@@ -129,11 +154,13 @@ public class Console : MonoBehaviour {
 
     private void FocusInputField()
     {
-        InputField[] inputFields = GetComponentsInChildren<InputField>();
-        InputField inputField = inputFields[0];
-        inputField.ActivateInputField();
-        inputField.text = ConsolePrompt();
-        moveToEnd = true;
+        InputField inputField = GetComponentInChildren<InputField>();
+        if(inputField)
+        {
+            inputField.ActivateInputField();
+            inputField.text = ConsolePrompt();
+            StartCoroutine(MoveTextEnd_NextFrame());
+        }
     }
 
     public void Show()
@@ -145,22 +172,27 @@ public class Console : MonoBehaviour {
     public void Hide()
     {
         _isOpen = false;
-        consoleInput.DeactivateInputField();
+        if(consoleInput)
+        {
+            consoleInput.DeactivateInputField();
+        }
     }
 
     void HandleVisibility()
     {
         RectTransform rect = GetComponentInChildren<Image>().transform as RectTransform;
         Vector2 wPos = rect.position;
-        
+
+        consoleHeight = Camera.main.pixelHeight / 2;
+
         if (isOpen)
         {
-            rect.offsetMin = new Vector2(0, Mathf.MoveTowards(rect.offsetMin.y, Screen.height - consoleHeight, consoleHeight * Time.deltaTime / closeSpeed));
+            rect.offsetMin = new Vector2(0, Mathf.MoveTowards(rect.offsetMin.y, Camera.main.pixelHeight - consoleHeight, consoleHeight * Time.deltaTime / closeSpeed));
             rect.offsetMax = new Vector2(0, Mathf.MoveTowards(rect.offsetMax.y, 0, consoleHeight * Time.deltaTime / closeSpeed));
         }
         else
         {
-            rect.offsetMin = new Vector2(0, Mathf.MoveTowards(rect.offsetMin.y, Screen.height, consoleHeight * Time.deltaTime / closeSpeed));
+            rect.offsetMin = new Vector2(0, Mathf.MoveTowards(rect.offsetMin.y, Camera.main.pixelHeight, consoleHeight * Time.deltaTime / closeSpeed));
             rect.offsetMax = new Vector2(0, Mathf.MoveTowards(rect.offsetMax.y, consoleHeight, consoleHeight * Time.deltaTime / closeSpeed));
         }
     }
@@ -189,7 +221,7 @@ public class Console : MonoBehaviour {
     void Update () {
 
         HandleVisibility();
-
+    
         if(isOpen)
         {
             ProcessKeys();         
@@ -197,12 +229,10 @@ public class Console : MonoBehaviour {
 
     }
 
-    void LateUpdate()
+    IEnumerator MoveTextEnd_NextFrame()
     {
-        if(moveToEnd)
-        {
-            consoleInput.MoveTextEnd(false);
-            moveToEnd = false;
-        }
+        yield return 0; // Skip the first frame in which this is called.
+        consoleInput.MoveTextEnd(false); // Do this during the next frame.
     }
+
 }

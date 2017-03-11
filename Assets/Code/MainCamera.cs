@@ -20,7 +20,7 @@ public class MainCamera : MonoBehaviour {
 	
     void Update()
     {
-
+        
     }
 
 	// Update is called once per frame

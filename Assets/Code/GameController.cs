@@ -60,6 +60,11 @@ public class GameController : MonoBehaviour
         
         debugMessages.Clear();
 
+        if (console.isOpen)
+        {
+            return;
+        }
+
         float hInput = Input.GetAxis("Horizontal");
         float vInput = Input.GetAxis("Vertical");
 

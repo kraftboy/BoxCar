@@ -92,6 +92,7 @@
     <Compile Include="Assets\Code\MonoBehaviourExtended.cs" />
     <Compile Include="Assets\Code\Singleton.cs" />
     <Compile Include="Assets\Code\Toolbox.cs" />
+    <Compile Include="Assets\Code\Utilities\UIUtils.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\BitmapFontImporter\Examples\Font1\font1.fnt" />
