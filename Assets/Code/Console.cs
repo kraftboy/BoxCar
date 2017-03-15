@@ -9,7 +9,7 @@ public class Console : MonoBehaviour {
     static public Console instance;
 
     private bool _isOpen;
-    public  bool isOpen { get { return _isOpen; } }
+    public bool isOpen { get { return _isOpen; } }
 
     private int consoleWidth;
     private int consoleHeight;
@@ -24,8 +24,8 @@ public class Console : MonoBehaviour {
     private int historyPosition = 0;
 
     // Use this for initialization
-    void Awake () {
-        
+    void Awake() {
+
         instance = this;
 
         Hide();
@@ -40,7 +40,7 @@ public class Console : MonoBehaviour {
         consoleHeight = Camera.main.pixelHeight / 2;
 
         GameObject panelObject = GameObject.Find("ConsolePanel");
-        if(panelObject)
+        if (panelObject)
         {
             RectTransform rectTransform = panelObject.transform as RectTransform;
             rectTransform.offsetMin = new Vector2(0, 0);
@@ -50,7 +50,7 @@ public class Console : MonoBehaviour {
         {
             Debug.Log("ConsolePanel not found.");
         }
-        
+
         GameObject inputGameObject = GameObject.Find("ConsoleInput");
         if (inputGameObject)
         {
@@ -64,7 +64,7 @@ public class Console : MonoBehaviour {
         {
             Debug.Log("ConsoleInput not found.");
         }
-        
+
         GameObject logObject = GameObject.Find("ConsoleLog");
         if (logObject)
         {
@@ -78,7 +78,7 @@ public class Console : MonoBehaviour {
             Vector3[] worldCorners = new Vector3[4];
             consoleLogText.rectTransform.GetWorldCorners(worldCorners);
             logLineCount = (int)Mathf.Abs(((worldCorners[1].y - worldCorners[0].y) / consoleLogText.font.lineHeight));
-            logLineCount += 4;
+            logLineCount += 3;
 
             TextGenerationSettings generationSettings = consoleLogText.GetGenerationSettings(consoleLogText.rectTransform.rect.size);
             float textHeight = consoleLogText.cachedTextGeneratorForLayout.GetPreferredHeight("", generationSettings);
@@ -93,6 +93,15 @@ public class Console : MonoBehaviour {
         }
 
         UIUtils.MoveToLayer(transform, LayerMask.NameToLayer("UI"));
+
+        CommandManager cmdMgr = Toolbox.RegisterComponent<CommandManager>();
+        cmdMgr.AddCommand("clear", ClearConsole);
+    }
+
+    string ClearConsole(string[] args)
+    {
+        consoleLogText.text = "";
+        return "";
     }
 
     string consolePrompt = ">";
@@ -104,11 +113,50 @@ public class Console : MonoBehaviour {
     void ProcessKey(InputField input)
     {
         InputField inputField = GetComponentInChildren<InputField>();
-        if(inputField.text.Length < consolePrompt.Length)
+        if (inputField.text.Length < consolePrompt.Length)
         {
             inputField.text = ConsolePrompt();
             inputField.caretPosition = ConsolePrompt().Length;
         }
+    }
+
+    void ProcessKeys()
+    {
+        if (!Input.anyKeyDown)
+        {
+            return;
+        }
+
+        bool setFromHistory = false;
+        if (Input.GetKey(KeyCode.UpArrow))
+        {
+            setFromHistory = true;
+            ++historyPosition;
+        }
+
+        if (Input.GetKey(KeyCode.DownArrow))
+        {
+            setFromHistory = true;
+            --historyPosition;
+        }
+
+        if (!setFromHistory)
+            return;
+
+        historyPosition = Mathf.Clamp(historyPosition, 0, historyBuffer.Count);
+
+        string setTextTo;
+        if (historyPosition == 0)
+        {
+            setTextTo = "";
+        }
+        else
+        {
+            setTextTo = historyBuffer[historyPosition - 1];
+        }
+
+        consoleInput.text = ConsolePrompt() + setTextTo;
+        consoleInput.MoveTextEnd(false);
     }
 
     void ProcessInput(InputField input)
@@ -120,23 +168,26 @@ public class Console : MonoBehaviour {
         {
             command = consoleInput.text.Substring(consolePrompt.Length);
         }
-        
+
         // ignore tilde
         if (command == "`" || command == "")
         {
             FocusInputField();
             return;
         }
-            
+
 
         historyBuffer.Insert(0, command);
         consoleLog.Add(consoleInput.text);
 
         CommandManager cmdMgr = Toolbox.RegisterComponent<CommandManager>();
         string output = "";
-        if (cmdMgr.ProcessCommand(ref output, command))
+        string commandString = command.Split().First();
+        string[] args = command.Split().Skip(1).ToArray();
+        if (cmdMgr.ProcessCommand(ref output, commandString, args))
         {
             consoleLog.Add(output);
+            historyPosition = 0;
         }
         else
         {
@@ -149,18 +200,32 @@ public class Console : MonoBehaviour {
         }
 
         consoleLogText.text = string.Join("\n", consoleLog.ToArray());
+        ResetConsoleInputText();
         FocusInputField();
     }
 
     private void FocusInputField()
     {
         InputField inputField = GetComponentInChildren<InputField>();
-        if(inputField)
+        if (inputField)
         {
             inputField.ActivateInputField();
             inputField.text = ConsolePrompt();
             StartCoroutine(MoveTextEnd_NextFrame());
         }
+    }
+
+    IEnumerator MoveTextEnd_NextFrame()
+    {
+        yield return 0; // Skip the first frame in which this is called.
+        consoleInput.MoveTextEnd(false); // Do this during the next frame.
+    }
+
+    public void ResetConsoleInputText()
+    {
+        InputField inputField = GetComponentInChildren<InputField>();
+        inputField.text = ConsolePrompt();
+        FocusInputField();
     }
 
     public void Show()
@@ -197,26 +262,6 @@ public class Console : MonoBehaviour {
         }
     }
 
-    void ProcessKeys()
-    {
-        if (!Input.anyKeyDown)
-        {
-            return;
-        }
-
-        if (Input.GetKey(KeyCode.UpArrow))
-        {
-            historyPosition = Mathf.Min(++historyPosition, historyBuffer.Count);
-            consoleInput.text = historyBuffer[historyPosition-1];
-        }
-
-        if (Input.GetKey(KeyCode.DownArrow))
-        {
-            historyPosition = Mathf.Max(--historyPosition, 1);
-            consoleInput.text = historyBuffer[historyPosition - 1];
-        }
-    }
-
     // Update is called once per frame
     void Update () {
 
@@ -228,11 +273,4 @@ public class Console : MonoBehaviour {
         }
 
     }
-
-    IEnumerator MoveTextEnd_NextFrame()
-    {
-        yield return 0; // Skip the first frame in which this is called.
-        consoleInput.MoveTextEnd(false); // Do this during the next frame.
-    }
-
 }

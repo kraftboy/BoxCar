@@ -5,7 +5,6 @@ using System.Text;
 using UnityEngine;
 
 class CommandManager : MonoBehaviour
-
 {
     public class ConsoleCommand
     {   
@@ -33,6 +32,11 @@ class CommandManager : MonoBehaviour
         private Func<string[], string> func;
     };
 
+    public CommandManager()
+    {
+        AddDefaultCommands();
+    }
+
     private List<ConsoleCommand> commands = new List<ConsoleCommand>();
 
     public bool AddCommand(string commandStr, Func<string[], string> func)
@@ -45,20 +49,27 @@ class CommandManager : MonoBehaviour
     {
         try
         {
-            ConsoleCommand cmd = commands.FirstOrDefault(x => x.GetCommandString() == command);
+            ConsoleCommand cmd = commands.Where(x => x.GetCommandString() == command).FirstOrDefault();
 
             if (cmd == null)
                 return false;
 
-            output = cmd.Execute();
+            output = cmd.Execute(list);
             return true;
         }
         catch (Exception e)
         {
-            Debug.Log("Exception: " + e.ToString());
+            string error = "Exception: " + e.ToString();
+            Debug.Log(error);
+            output = error;
         }
 
         return false;
+    }
+
+    void AddDefaultCommands()
+    {
+        AddCommand("debugw", BoxCar.Debug.GenericDebugCommands.AddDebugWidget);
     }
 }
 

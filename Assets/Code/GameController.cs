@@ -7,7 +7,7 @@ using System.Linq;
 
 public class GameController : MonoBehaviour
 {
-
+    
     public GameObject gameCamera;
     public GameObject hero;
 

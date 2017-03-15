@@ -51,6 +51,9 @@ public class DebugWidget : MonoBehaviour {
 
         // canvas
         Canvas debugCanvas = debugWidget.AddComponent<Canvas>();
+        CanvasScaler canvasScaler = debugWidget.AddComponent<CanvasScaler>();
+        canvasScaler.scaleFactor = 20;
+        canvasScaler.dynamicPixelsPerUnit = 3;
 
         // render mode
         debugCanvas.renderMode = RenderMode.WorldSpace;
@@ -77,7 +80,7 @@ public class DebugWidget : MonoBehaviour {
         GameObject textObject = new GameObject("TextWidget");
         textObject.transform.SetParent(parent.transform, false);
         debugText = textObject.AddComponent<Text>();
-        debugText.fontSize = 72;
+        debugText.fontSize = 76;
         debugText.color = Color.black;
         debugText.font = debugFont;
         debugText.horizontalOverflow = HorizontalWrapMode.Overflow;

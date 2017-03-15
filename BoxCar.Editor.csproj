@@ -139,7 +139,6 @@
   <ItemGroup>
     <None Include="Assets\BitmapFontImporter\Examples\Font1\font1.fnt" />
     <None Include="Assets\BitmapFontImporter\Examples\Font2\font2.fnt" />
-    <None Include="Assets\Fonts\minecraftia\minecraftia.fnt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="GenerateTargetFrameworkMonikerAttribute" />
